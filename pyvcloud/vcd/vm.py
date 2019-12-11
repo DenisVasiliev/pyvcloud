@@ -35,6 +35,8 @@ from pyvcloud.vcd.exceptions import OperationNotSupportedException
 from pyvcloud.vcd.metadata import Metadata
 from pyvcloud.vcd.utils import uri_to_api_uri
 
+from lxml import etree
+
 
 class VM(object):
     """A helper class to work with Virtual Machines."""
@@ -1016,16 +1018,21 @@ class VM(object):
         if is_disk:
             uri = self.href + '/virtualHardwareSection/disks'
             disk_list = self.client.get_resource(uri)
-            vhs_disk_info = {}
+            vhs_disks_info = {}
             for disk in disk_list.Item:
                 if disk['{' + NSMAP['rasd'] + '}Description'] == 'Hard disk':
-                    vhs_disk_info['diskElementName'] = disk[
+                    vhs_disk_info = {}
+                    diskElementName = disk[
                         '{' + NSMAP['rasd'] + '}ElementName']
                     vhs_disk_info['diskVirtualQuantityInBytes'] \
                         = disk[
                         '{' + NSMAP['rasd'] + '}VirtualQuantity']
+                    vhs_disk_info['storageProfileHref'] \
+                        = disk[
+                        '{' + NSMAP['rasd'] + '}HostResource'].attrib['{' + NSMAP['ns10'] + '}storageProfileHref']
+                    vhs_disks_info[diskElementName] = vhs_disk_info
 
-            result.append(vhs_disk_info)
+            result.append(vhs_disks_info)
 
         if is_media:
             uri = self.href + '/virtualHardwareSection/media'
